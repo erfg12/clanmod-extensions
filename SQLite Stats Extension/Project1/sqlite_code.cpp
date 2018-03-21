@@ -1,3 +1,4 @@
+#include "sha/sha1.h"
 #include "shared.h"
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName) {

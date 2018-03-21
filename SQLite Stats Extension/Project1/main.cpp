@@ -1,5 +1,8 @@
 #include "shared.h"
 
+HANDLE hPipe;
+DWORD dwWritten;
+
 void getGameMsg() {
 	char data[1000];
 	DWORD numRead;
@@ -20,7 +23,7 @@ void getGameMsg() {
 					token = strtok(NULL, "|");
 				}
 				if (strstr("register", array[0]) != NULL) {
-					//sqliteGetName
+					//sqliteRegisterUser
 				}
 				if (strstr("login", array[0]) != NULL) {
 					//login

@@ -20,7 +20,6 @@ void updateStats(int sql_kills, int	sql_deaths, int	sql_flagcaps, int sql_duelwi
 }
 
 void sendResponse(char *msg) {
-	dwWritten;
 	char trim[999];
 	strncpy_s(trim, msg, _TRUNCATE);
 	printf("SENDING: %s\n", trim);

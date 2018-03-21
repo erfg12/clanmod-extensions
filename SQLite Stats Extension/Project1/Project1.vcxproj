@@ -88,6 +88,8 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_MBCS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\Jake\Documents\GitHub\clanmod-extensions\SQLite Stats Extension\Project1\sqlite3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -121,10 +123,16 @@
   <ItemGroup>
     <ClCompile Include="commands.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="sha\sha.c" />
+    <ClCompile Include="sha\sha1.c" />
+    <ClCompile Include="sqlite3\sqlite3.c" />
     <ClCompile Include="sqlite_code.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shared.h" />
+    <ClInclude Include="sha\sha1.h" />
+    <ClInclude Include="sqlite3\sqlite3.h" />
+    <ClInclude Include="sqlite3\sqlite3ext.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
