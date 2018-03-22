@@ -27,33 +27,38 @@ public:
 	HANDLE hPipe = CreateFile(pipename, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 	using SleepyDiscord::DiscordClient::DiscordClient;
 	void getGameMsg() {
-		char data[1000];
-		DWORD numRead;
-		char *token;
-		DWORD bytesAvail = 0;
-		BOOL isOK = PeekNamedPipe(hPipe, NULL, 0, NULL, &bytesAvail, NULL);
-		if (bytesAvail > 0) {
-			ReadFile(hPipe, data, 1000, &numRead, NULL);
-			if (numRead > 0) {
-				printf("RECEIVED: %s\n", data);
-				if (strstr(data, "|") != NULL) {
-					char *token = strtok(data, "|");
-					char *array[3];
-					int i = 0;
-					while (token != NULL)
-					{
-						array[i++] = token;
-						token = strtok(NULL, "|");
-					}
-					if (strstr("say", array[0]) != NULL) { //say command
-						sendMessage(chanid, array[1]);
+		while (1) {
+			char data[1000] = { 0 };
+			char peekBuf[1000] = { 0 };
+			DWORD numRead;
+			char *token;
+			DWORD bytesAvail = 0;
+			if (PeekNamedPipe(hPipe, NULL, 1000, NULL, &bytesAvail, NULL)) {
+				if (bytesAvail > 0) {
+					ReadFile(hPipe, data, 1000, &numRead, NULL);
+					if (numRead > 0) {
+						printf("RECEIVED: %s\n", data);
+						if (strstr(data, "|") != NULL) {
+							char *token = strtok(data, "|");
+							char *array[2];
+							int i = 0;
+							while (token != NULL)
+							{
+								if (i == 2) break;
+								array[i++] = token;
+								token = strtok(NULL, "|");
+							}
+							//printf("Recognized command: %s\n", array[0]);
+							if (strstr("say", array[0]) != NULL) { //say command
+								//printf("Sending text: %s\n", array[1]);
+								sendMessage(chanid, array[1]);
+							}
+						}
 					}
 				}
 			}
-			free(data);
+			sleep(1000);
 		}
-		sleep(1000);
-		getGameMsg(); //loop back around
 	}
 	void onReady(std::string* jsonMessage) {
 		if (hPipe == INVALID_HANDLE_VALUE) 
@@ -69,15 +74,17 @@ public:
 		//printf("heartbeat\n");
 	//}
 	void onMessage(SleepyDiscord::Message message) {
+		if (strstr(message.content.c_str(), "[JKA]") != NULL) { //dont re-send messages
+			return;
+		}
+		if (message.author.username.c_str())
 		if (hPipe == INVALID_HANDLE_VALUE)
 			printf("Named Pipe Creation Error: %d\n", GetLastError());
 		else {
 			ConnectNamedPipe(hPipe, NULL);
 		}
 		char trim[999];
-		char *pretrim;
-		sprintf(pretrim, "[DISCORD]%s|%s", message.author.username.c_str(), message.content.c_str());
-		strncpy_s(trim, pretrim, _TRUNCATE);
+		_snprintf_s(trim, _TRUNCATE, "say|[DISCORD]%s: %s", message.author.username.c_str(), message.content.c_str()); //prefix [DISCORD] so we know where it came from
 		printf("SENDING: %s\n", trim);
 		WriteFile(hPipe, trim, 999, &dwWritten, NULL);
 	}
