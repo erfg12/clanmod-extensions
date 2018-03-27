@@ -39,14 +39,15 @@ public:
 					if (numRead > 0) {
 						printf("RECEIVED: %s\n", data);
 						if (strstr(data, "|") != NULL) {
-							char *token = strtok(data, "|");
+							char *next_token;
+							char *token = strtok_s(data, "|", &next_token);
 							char *array[2];
 							int i = 0;
 							while (token != NULL)
 							{
 								if (i == 2) break;
 								array[i++] = token;
-								token = strtok(NULL, "|");
+								token = strtok_s(NULL, "|", &next_token);
 							}
 							//printf("Recognized command: %s\n", array[0]);
 							if (strstr("say", array[0]) != NULL) { //say command
