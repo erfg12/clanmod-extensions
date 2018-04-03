@@ -78,7 +78,6 @@ public:
 		if (strstr(message.content.c_str(), ": [") != NULL) { //dont re-send messages
 			return;
 		}
-		if (message.author.username.c_str())
 		if (hPipe == INVALID_HANDLE_VALUE)
 			printf("Named Pipe Creation Error: %d\n", GetLastError());
 		else {
