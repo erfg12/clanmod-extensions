@@ -75,7 +75,7 @@ public:
 		//printf("heartbeat\n");
 	//}
 	void onMessage(SleepyDiscord::Message message) {
-		if (strstr(message.content.c_str(), "[JKA]") != NULL) { //dont re-send messages
+		if (strstr(message.content.c_str(), ": [") != NULL) { //dont re-send messages
 			return;
 		}
 		if (message.author.username.c_str())
@@ -85,7 +85,7 @@ public:
 			ConnectNamedPipe(hPipe, NULL);
 		}
 		char trim[999];
-		_snprintf_s(trim, _TRUNCATE, "say|[DISCORD]%s: %s", message.author.username.c_str(), message.content.c_str()); //prefix [DISCORD] so we know where it came from
+		_snprintf_s(trim, sizeof(trim), _TRUNCATE, "say|[DISCORD]%s: %s", message.author.username.c_str(), message.content.c_str()); //prefix [DISCORD] so we know where it came from
 		printf("SENDING: %s\n", trim);
 		WriteFile(hPipe, trim, 999, &dwWritten, NULL);
 	}
