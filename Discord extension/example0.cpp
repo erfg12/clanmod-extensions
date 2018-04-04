@@ -1,4 +1,5 @@
 #include "sleepy_discord/websocketpp_websocket.h"
+#include "inih/INIReader.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -92,14 +93,21 @@ public:
 
 int main() {
 	string line;
-	ifstream myfile("channelid.cfg");
+	/*ifstream myfile("channelid.cfg");
 	if (!myfile.is_open()) {
 		printf("missing channelid.cfg file!\n");
 		return 0;
 	}
 	getline(myfile, line);
-	chanid = line.c_str();
-	myfile.close();
+	myfile.close();*/
+
+	INIReader reader("settings.ini");
+
+	if (reader.ParseError() < 0) {
+		std::cout << "Can't load 'settings.ini'\n";
+		return 1;
+	}
+	chanid = reader.Get("settings", "channelid", "00000000000000").c_str();
 	
 	myClientClass client("NDIzNTcyMTA0Mzc0Mzg2NzAw.DYsR4A.VsdbYVBEYeVJMVyq5QXiYSRnWOM", 2);
 	client.run();

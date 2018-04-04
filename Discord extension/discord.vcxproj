@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>$(SolutionDir)$(Configuration);$(SolutionDir)deps\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)include;$(SolutionDir)deps;$(SolutionDir)deps\include;$(SolutionDir)include\sleepy_discord\IncludeNonexistent;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)include;$(SolutionDir)deps;$(SolutionDir)deps\include;$(SolutionDir)include\sleepy_discord\IncludeNonexistent;$(SolutionDir)include\inih;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(SolutionDir)include;$(SolutionDir)deps;$(SolutionDir)deps\include;$(SolutionDir)include\sleepy_discord\IncludeNonexistent;$(IncludePath)</IncludePath>
@@ -143,6 +143,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="example0.cpp" />
+    <ClCompile Include="include\inih\ini.c" />
+    <ClCompile Include="include\inih\INIReader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
