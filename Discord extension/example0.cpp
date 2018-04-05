@@ -165,6 +165,6 @@ int main() {
 	chanid = reader.Get("settings", "channelid", "00000000000000");
 	pipenames = reader.Get("settings", "pipenames", "jko,jka");
 	
-	myClientClass client("NDIzNTcyMTA0Mzc0Mzg2NzAw.DYsR4A.VsdbYVBEYeVJMVyq5QXiYSRnWOM", 2);
+	myClientClass client(reader.Get("settings", "token", "NDIzNTcyMTA0Mzc0Mzg2NzAw.DYsR4A.VsdbYVBEYeVJMVyq5QXiYSRnWOM"), 2);
 	client.run();
 }
