@@ -78,7 +78,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>$(SolutionDir)mysql_extension\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\Jake\Desktop\boost_1_66_0;$(SolutionDir)mysql_extension\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)mysql_extension\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
