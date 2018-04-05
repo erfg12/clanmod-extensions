@@ -23,11 +23,11 @@ using namespace std;
 std::string chanid; //discord channel id from ini file
 std::string pipenames; //pipe name suffixes from ini file
 vector<int> connectedPipes; //index array of connect pipes
-//#ifdef WIN32
+#ifdef WIN32
 HANDLE pipeHandles[100]; //pipe handlers for Windows
-/*#else
-unsigned long pipeHandles[100]; //pipe handlers for Linux
-#endif*/
+#else
+std::vector<string> linuxPipeHandles[100]; //pipe handlers for Linux
+#endif
 char rcData[1000] = { 0 }; //received data, filter against this for send msgs to prevent sendback
 std::vector<string> pnArray;
 
@@ -67,7 +67,13 @@ public:
 				//	cout << "[DEBUG] Named Pipe " << pnArray[s] << " is not available." << endl;
 				//}
 #else
-				//linux code goes here
+				char combine[255];
+				_snprintf_s(combine, sizeof(combine), _TRUNCATE, "/tmp/%s", pnArray[s].erase(pnArray[s].begin() + 9));
+				linuxPipeHandles.push_back(combine);
+				FILE *stream;
+				stream = fdopen(combine, "w");
+				fprintf(stream, "Discord extension connected");
+				fclose(stream);
 #endif
 			}
 		}
@@ -88,12 +94,34 @@ public:
 	}
 
 	using SleepyDiscord::DiscordClient::DiscordClient;
+	void sendMsg(char data[1000]) {
+		printf("RECEIVED: %s\n", data);
+		if (strstr(data, "|") != NULL) {
+			char *next_token;
+			char *token = strtok_s(data, "|", &next_token);
+			char *array[2];
+			int i = 0;
+			while (token != NULL)
+			{
+				if (i == 2) break;
+				array[i++] = token;
+				token = strtok_s(NULL, "|", &next_token);
+			}
+			//printf("[DEBUG] Recognized command: %s\n", array[0]);
+			if (strstr("say", array[0]) != NULL) { //say command
+				printf("[DEBUG] Sending text:%s chanid:%s\n", array[1], chanid);
+				sendMessage(chanid, array[1]);
+			}
+		}
+	}
 	void getGameMsg() {
 		while (1) {
 			char data[1000] = { 0 };
 			char peekBuf[1000] = { 0 };
+#ifdef _WIN32
 			DWORD numRead;
 			DWORD bytesAvail = 0;
+#endif
 
 			for (int i = 0; i < connectedPipes.size(); i++) {
 				int cp = connectedPipes[i];
@@ -101,31 +129,23 @@ public:
 					cout << pnArray[cp] << " #" << cp << " is bad! ERR:" << GetLastError() << endl;
 					continue;
 				}
+#ifdef _WIN32
 				if (PeekNamedPipe(pipeHandles[cp], NULL, 1000, NULL, &bytesAvail, NULL)) {
 					if (bytesAvail > 0) {
 						ReadFile(pipeHandles[cp], data, 1000, &numRead, NULL);
 						if (numRead > 0) {
-							printf("RECEIVED: %s\n", data);
-							if (strstr(data, "|") != NULL) {
-								char *next_token;
-								char *token = strtok_s(data, "|", &next_token);
-								char *array[2];
-								int i = 0;
-								while (token != NULL)
-								{
-									if (i == 2) break;
-									array[i++] = token;
-									token = strtok_s(NULL, "|", &next_token);
-								}
-								//printf("[DEBUG] Recognized command: %s\n", array[0]);
-								if (strstr("say", array[0]) != NULL) { //say command
-									printf("[DEBUG] Sending text:%s chanid:%s\n", array[1], chanid);
-									sendMessage(chanid, array[1]);
-								}
-							}
+							sendMsg(data);
 						}
 					}
 				}
+#else
+				FILE *stream;
+				stream = fdopen(linuxPipeHandles[cp], "r");
+				while ((c = fgetc(stream)) != EOF) {
+					sendMsg(c);
+				}
+				fclose(stream);
+#endif
 			}
 			sleep(1000);
 		}
@@ -147,7 +167,15 @@ public:
 				cout << "ERROR: pipeHandles #" << connectedPipes[i] << " is invalid! ERR:" << GetLastError() << endl;
 			}
 			else {
+#ifdef _WIN32
 				WriteFile(pipeHandles[connectedPipes[i]], trim, 999, &dwWritten, NULL);
+#else
+				FILE *stream;
+				stream = fdopen(connectedPipes[i], "w");
+				fprintf(stream, trim);
+				fclose(stream);
+
+#endif
 				cout << "SENDING: " << trim << endl;
 			}
 		}
