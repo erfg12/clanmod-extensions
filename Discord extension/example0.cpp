@@ -20,15 +20,14 @@
 
 using namespace std;
 
-const char *chanid; //discord channel id from ini file
+std::string chanid; //discord channel id from ini file
 std::string pipenames; //pipe name suffixes from ini file
-int totalPipesNum = 0; //a total of pipes for iteration
 vector<int> connectedPipes; //index array of connect pipes
-#ifdef WIN32
+//#ifdef WIN32
 HANDLE pipeHandles[100]; //pipe handlers for Windows
-#else
+/*#else
 unsigned long pipeHandles[100]; //pipe handlers for Linux
-#endif
+#endif*/
 char rcData[1000] = { 0 }; //received data, filter against this for send msgs to prevent sendback
 std::vector<string> pnArray;
 
@@ -49,18 +48,23 @@ public:
 	void checkNamedPipeConnection(vector<string> pnArray) { //check named pipes and connect if available
 		//cout << "[DEBUG] pnArray=" << pnArray.size() << " connectedPipes=" << connectedPipes.size() << endl;
 		while (connectedPipes.size() < pnArray.size()) {
-			for (int s = 0; s < totalPipesNum; ++s) {
+			for (int s = 0; s < pnArray.size(); ++s) {
 #ifdef WIN32
+				if (std::find(connectedPipes.begin(), connectedPipes.end(), s) != connectedPipes.end()) {
+					//cout << "[DEBUG]:" << pnArray[s].c_str() << " already connected..." << endl;
+					continue;
+				}
 				pipeHandles[s] = CreateFile(pnArray[s].c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+				//cout << "trying to make pipe for " << pnArray[s].c_str() << endl;
 				if (pipeHandles[s] != INVALID_HANDLE_VALUE) {
-					cout << "Namedpipe " << pnArray[s].c_str() << " (#" << s << ") found! Connecting...";
+					cout << "Namedpipe " << pnArray[s].c_str() << " (pipeHandle #" << s << ") found! Connecting...";
 					ConnectNamedPipe(pipeHandles[s], NULL);
 					WriteFile(pipeHandles[s], "Discord extension connected", 999, &dwWritten, NULL);
 					connectedPipes.push_back(s);
 					cout << " DONE" << endl;
 				}
 				//else {
-				//	cout << "[DEBUG] Named Pipe %s not available" << pnArray[s] << endl;
+				//	cout << "[DEBUG] Named Pipe " << pnArray[s] << " is not available." << endl;
 				//}
 #else
 				//linux code goes here
@@ -71,7 +75,6 @@ public:
 
 	void makePipes() {
 		char *token;
-		int i = 0;
 		char * writable = new char[pipenames.size()];
 		std::copy(pipenames.begin(), pipenames.end(), writable);
 		writable[pipenames.size()] = '\0';
@@ -79,9 +82,7 @@ public:
 			char combine[255];
 			_snprintf_s(combine, sizeof(combine), _TRUNCATE, "\\\\.\\pipe\\discord-%s", token); //make our real pipe name (discord-suffix) suffix from ini file pipenames
 			pnArray.push_back(combine);
-			i++;
 		}
-		totalPipesNum = i;
 		std::thread second(&myClientClass::checkNamedPipeConnection, this, pnArray);
 		second.detach();
 	}
@@ -96,9 +97,8 @@ public:
 
 			for (int i = 0; i < connectedPipes.size(); i++) {
 				int cp = connectedPipes[i];
-				//cout << "new connected pipe #" << cp << endl;
-				if (NULL == pipeHandles[cp]) {
-					cout << pnArray[cp] << " #" << cp << " is bad!" << endl;
+				if (pipeHandles[cp] == INVALID_HANDLE_VALUE) {
+					cout << pnArray[cp] << " #" << cp << " is bad! ERR:" << GetLastError() << endl;
 					continue;
 				}
 				if (PeekNamedPipe(pipeHandles[cp], NULL, 1000, NULL, &bytesAvail, NULL)) {
@@ -119,7 +119,7 @@ public:
 								}
 								//printf("[DEBUG] Recognized command: %s\n", array[0]);
 								if (strstr("say", array[0]) != NULL) { //say command
-									//printf("[DEBUG] Sending text: %s\n", array[1]);
+									printf("[DEBUG] Sending text:%s chanid:%s\n", array[1], chanid);
 									sendMessage(chanid, array[1]);
 								}
 							}
@@ -142,12 +142,14 @@ public:
 		//if (strstr(message.content.c_str(), rcData) != NULL) return; //prevent sendback
 		char trim[999];
 		_snprintf_s(trim, sizeof(trim), _TRUNCATE, "say|[DISCORD]%s: %s", message.author.username.c_str(), message.content.c_str()); //prefix [DISCORD] so we know where it came from
-		printf("SENDING: %s\n", trim);
 		for (int i = 0; i < connectedPipes.size(); i++) {
 			if (pipeHandles[connectedPipes[i]] == INVALID_HANDLE_VALUE) {
-				cout << "ERROR: pipeHandles #" << connectedPipes[i] << " is invalid!" << endl;
-			} else 
+				cout << "ERROR: pipeHandles #" << connectedPipes[i] << " is invalid! ERR:" << GetLastError() << endl;
+			}
+			else {
 				WriteFile(pipeHandles[connectedPipes[i]], trim, 999, &dwWritten, NULL);
+				cout << "SENDING: " << trim << endl;
+			}
 		}
 	}
 };
@@ -160,7 +162,7 @@ int main() {
 		std::cout << "Can't load 'settings.ini'\n";
 		return 1;
 	}
-	chanid = reader.Get("settings", "channelid", "00000000000000").c_str();
+	chanid = reader.Get("settings", "channelid", "00000000000000");
 	pipenames = reader.Get("settings", "pipenames", "jko,jka");
 	
 	myClientClass client("NDIzNTcyMTA0Mzc0Mzg2NzAw.DYsR4A.VsdbYVBEYeVJMVyq5QXiYSRnWOM", 2);
